@@ -1,0 +1,13 @@
+node_modules/
+.env
+client/node_modules/
+server/node_modules/
+/dist
+/build
+/uploads
+.DS_Store
+npm-debug.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

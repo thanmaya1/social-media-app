@@ -1,0 +1,33 @@
+import React, { useEffect, useState } from 'react';
+import PostCreate from '../components/Posts/PostCreate';
+import Feed from '../components/Posts/Feed';
+import { connectSocket, subscribe } from '../socket';
+
+export default function Home() {
+  const [newPost, setNewPost] = useState(null);
+
+  useEffect(() => {
+    const socket = connectSocket();
+    const unsubNew = subscribe('new_post', (post) => {
+      setNewPost(post);
+    });
+    const unsubLike = subscribe('post_liked', (data) => {
+      // could notify feed to update, but feed will poll/refetch for simplicity
+      console.log('post liked', data);
+    });
+
+    return () => {
+      unsubNew();
+      unsubLike();
+      if (socket && socket.disconnect) socket.disconnect();
+    };
+  }, []);
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h1>Home</h1>
+      <PostCreate />
+      <Feed newPost={newPost} />
+    </div>
+  );
+}

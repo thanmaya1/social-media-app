@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - 27017:27017
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/social_media_app
+      - ACCESS_TOKEN_SECRET=changeme_access
+      - REFRESH_TOKEN_SECRET=changeme_refresh
+      - CLIENT_URL=http://localhost:3000
+    volumes:
+      - ./server/uploads:/app/uploads
+    ports:
+      - 5000:5000
+
+  client:
+    build:
+      context: ./client
+    restart: unless-stopped
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000/api
+    ports:
+      - 3000:3000
+
+volumes:
+  mongo_data:

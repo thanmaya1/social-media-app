@@ -1,0 +1,20 @@
+{
+  "env": {
+    "es2021": true,
+    "node": true
+  },
+  "extends": ["eslint:recommended", "plugin:node/recommended"],
+  "rules": {
+    "no-console": "off"
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.js"],
+      "env": { "jest": true },
+      "rules": {
+        "node/no-unpublished-require": "off",
+        "no-unused-vars": ["warn", { "args": "none", "vars": "local" }]
+      }
+    }
+  ]
+}
