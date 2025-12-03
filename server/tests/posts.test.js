@@ -18,7 +18,9 @@ afterAll(async () => {
 describe('Posts', () => {
   test('create and get feed', async () => {
     // register a user
-    const reg = await request(app).post('/api/auth/register').send({ username: 'puser', email: 'p@example.com', password: 'Password123!' });
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'puser', email: 'p@example.com', password: 'Password123!' });
     expect(reg.status).toBe(200);
     const token = reg.body.accessToken;
 

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import PostCreate from './PostCreate';
 
 jest.mock('../../services/posts', () => ({
-  createPost: jest.fn(() => Promise.resolve({}))
+  createPost: jest.fn(() => Promise.resolve({})),
 }));
 
 test('renders PostCreate and allows typing', () => {

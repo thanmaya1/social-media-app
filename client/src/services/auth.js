@@ -19,3 +19,23 @@ export async function logout(refreshToken) {
   const res = await api.post('/auth/logout', { refreshToken });
   return res.data;
 }
+
+export async function forgotPassword(email) {
+  const res = await api.post('/auth/forgot-password', { email });
+  return res.data;
+}
+
+export async function resetPassword(token, password) {
+  const res = await api.post(`/auth/reset-password/${token}`, { password });
+  return res.data;
+}
+
+export async function verifyEmail(token) {
+  const res = await api.post('/auth/verify-email', { token });
+  return res.data;
+}
+
+export async function resendVerification(email) {
+  const res = await api.post('/auth/resend-verification', { email });
+  return res.data;
+}

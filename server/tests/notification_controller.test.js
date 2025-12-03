@@ -4,6 +4,7 @@ const request = require('supertest');
 const { start, stop } = require('./util');
 const { createApp } = require('../app');
 const Notification = require('../models/Notification');
+const notificationService = require('../utils/notificationService');
 
 let app;
 
@@ -30,8 +31,14 @@ describe('Notification Controller', () => {
     expect(regB.status).toBe(200);
     const tokenB = regB.body.accessToken;
 
-    // create a notification for A (use allowed enum types)
-    const n = await Notification.create({ recipient: regA.body.user.id, sender: regB.body.user.id, type: 'message', message: 'hello' });
+    // create a notification for A (use allowed enum types) via service
+    const n = await notificationService.createNotification({
+      recipient: regA.body.user.id,
+      sender: regB.body.user.id,
+      type: 'message',
+      message: 'hello',
+      force: true,
+    });
 
     // B tries to mark A's notification as read -> 403
     const resForbidden = await request(app)
@@ -54,21 +61,31 @@ describe('Notification Controller', () => {
     const userId = reg.body.user.id;
 
     // create several notifications using allowed types
-    await Notification.create({ recipient: userId, sender: userId, type: 'message', message: '1' });
-    await Notification.create({ recipient: userId, sender: userId, type: 'system', message: '2', read: true });
-    await Notification.create({ recipient: userId, sender: userId, type: 'follow', message: '3' });
+    await notificationService.createNotification({ recipient: userId, sender: userId, type: 'message', message: '1', force: true });
+    // create a read notification by creating then marking read
+    const n2 = await notificationService.createNotification({ recipient: userId, sender: userId, type: 'system', message: '2', force: true });
+    if (n2 && n2._id) {
+      await Notification.findByIdAndUpdate(n2._id, { read: true });
+    }
+    await notificationService.createNotification({ recipient: userId, sender: userId, type: 'follow', message: '3', force: true });
 
     // unread count should be 2
-    const countRes = await request(app).get('/api/notifications/unread-count').set('Authorization', `Bearer ${token}`);
+    const countRes = await request(app)
+      .get('/api/notifications/unread-count')
+      .set('Authorization', `Bearer ${token}`);
     expect(countRes.status).toBe(200);
     expect(countRes.body.unread).toBe(2);
 
     // mark all read
-    const markAll = await request(app).put('/api/notifications/read-all').set('Authorization', `Bearer ${token}`);
+    const markAll = await request(app)
+      .put('/api/notifications/read-all')
+      .set('Authorization', `Bearer ${token}`);
     expect(markAll.status).toBe(200);
 
     // unread should be 0 now
-    const countRes2 = await request(app).get('/api/notifications/unread-count').set('Authorization', `Bearer ${token}`);
+    const countRes2 = await request(app)
+      .get('/api/notifications/unread-count')
+      .set('Authorization', `Bearer ${token}`);
     expect(countRes2.status).toBe(200);
     expect(countRes2.body.unread).toBe(0);
   });

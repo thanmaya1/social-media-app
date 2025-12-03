@@ -1,17 +1,13 @@
-import axios from 'axios';
+import api from '../lib/axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
-
+// Ensure Authorization header is applied consistently for services
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // default content-type for JSON requests
+  if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
+    config.headers['Content-Type'] = 'application/json';
+  }
   return config;
 });
 

@@ -29,22 +29,24 @@ export default function Register() {
         <div>
           <label>Username</label>
           <br />
-          <input value={username} onChange={e => setUsername(e.target.value)} />
+          <input value={username} onChange={(e) => setUsername(e.target.value)} />
         </div>
         <div>
           <label>Email</label>
           <br />
-          <input value={email} onChange={e => setEmail(e.target.value)} />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div>
           <label>Password</label>
           <br />
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         {error && <div style={{ color: 'red' }}>{error}</div>}
         <button type="submit">Register</button>
       </form>
-      <p>Already have an account? <Link to="/login">Login</Link></p>
+      <p>
+        Already have an account? <Link to="/login">Login</Link>
+      </p>
     </div>
   );
 }

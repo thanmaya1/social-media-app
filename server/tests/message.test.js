@@ -29,16 +29,24 @@ describe('Messages API', () => {
     const tokenB = regB.body.accessToken;
 
     // create a message from A -> B using the model
-    const msg = await Message.create({ sender: regA.body.user.id, recipient: regB.body.user.id, content: 'Hi Bob' });
+    const msg = await Message.create({
+      sender: regA.body.user.id,
+      recipient: regB.body.user.id,
+      content: 'Hi Bob',
+    });
 
     // B fetches messages with A
-    const res = await request(app).get(`/api/messages/${regA.body.user.id}`).set('Authorization', `Bearer ${tokenB}`);
+    const res = await request(app)
+      .get(`/api/messages/${regA.body.user.id}`)
+      .set('Authorization', `Bearer ${tokenB}`);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.messages)).toBe(true);
     expect(res.body.messages.length).toBeGreaterThanOrEqual(1);
 
     // B marks the message as read
-    const mark = await request(app).put(`/api/messages/${msg._id}/read`).set('Authorization', `Bearer ${tokenB}`);
+    const mark = await request(app)
+      .put(`/api/messages/${msg._id}/read`)
+      .set('Authorization', `Bearer ${tokenB}`);
     expect(mark.status).toBe(200);
     expect(mark.body.ok).toBe(true);
     expect(mark.body.message).toHaveProperty('readAt');

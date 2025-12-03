@@ -8,9 +8,7 @@ const logger = createLogger({
     format.splat(),
     format.json()
   ),
-  transports: [
-    new transports.Console({ level: process.env.LOG_LEVEL || 'info' })
-  ]
+  transports: [new transports.Console({ level: process.env.LOG_LEVEL || 'info' })],
 });
 
 module.exports = logger;

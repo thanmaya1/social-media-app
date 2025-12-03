@@ -1,0 +1,13 @@
+services:
+  server:
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    ports:
+      - "5000:5000"
+    # Use node directly in the dev container to avoid nodemon restart loops
+    command: node server.js
+
+  # client override removed to allow production client (nginx) from docker-compose.yml

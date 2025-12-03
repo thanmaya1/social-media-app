@@ -4,6 +4,7 @@ const request = require('supertest');
 const { start, stop } = require('./util');
 const { createApp } = require('../app');
 const Notification = require('../models/Notification');
+const notificationService = require('../utils/notificationService');
 
 let app;
 
@@ -29,15 +30,18 @@ describe('Notifications API', () => {
     const reg2 = await request(app).post('/api/auth/register').send(u2);
     expect(reg2.status).toBe(200);
 
-    // create a notification directly
-    await Notification.create({
+    // create a notification via service (force to bypass prefs in tests)
+    await notificationService.createNotification({
       recipient: reg.body.user.id || reg.body.user?._id || reg.body.user,
       sender: reg2.body.user.id || reg2.body.user?._id || reg2.body.user,
       type: 'message',
-      message: 'Hello!'
+      message: 'Hello!',
+      force: true,
     });
 
-    const res = await request(app).get('/api/notifications').set('Authorization', `Bearer ${accessToken}`);
+    const res = await request(app)
+      .get('/api/notifications')
+      .set('Authorization', `Bearer ${accessToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('notifications');
     expect(Array.isArray(res.body.notifications)).toBe(true);

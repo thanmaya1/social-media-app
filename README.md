@@ -1,113 +1,174 @@
 # Social Media App (MERN)
 
-This repository contains a production-ready scaffold for a social media application using the MERN stack (MongoDB, Express, React, Node). The current scaffold includes a minimal but functional authentication system (JWT access + refresh tokens) and a simple React frontend that can be used to extend the app.
+This workspace contains a full-stack social-media application (server + client). The repository has been implemented and tested to cover core features: authentication, posts, comments, messaging, notifications, follow/unfollow, profile updates, and realtime delivery via Socket.IO.
 
-## Structure
-
-- `server/` - Express backend
-- `client/` - React frontend
+Important: per the project scope Docker, CI, and Cypress E2E were intentionally left out.
 
 ## Quick start (development)
 
-1. Copy `.env.example` to `.env` in `server/` and set values.
-2. From `server/`:
+# Social Media App (MERN)
+
+This repository contains a full-stack social media app (Express + MongoDB backend, React + Vite frontend). The workspace implements core features: authentication, posts, comments, messaging, notifications, follow/unfollow, profile updates, and realtime delivery via Socket.IO.
+
+This README summarizes how to run the app locally and the important environment variables.
+
+## Quick start (development)
+
+Prerequisites:
+- Node.js 18+ and npm
+
+1) Install dependencies (server + client):
 
 ```powershell
-cd server; npm install
-# start in dev (requires nodemon)
+cd d:/socials/social-media-app/server
+npm install
+cd ../client
+npm install
+```
+
+2) Start the backend (development):
+
+```powershell
+cd d:/socials/social-media-app/server
 npm run dev
 ```
 
-3. From `client/`:
+3) Start the frontend (development):
 
 ```powershell
-cd client; npm install
-npm start
+cd d:/socials/social-media-app/client
+npm run dev
 ```
 
-## Next steps
-- Implement posts, comments, uploads (Cloudinary/S3), sockets (Socket.io), tests, CI, and deployment.
-- Harden security (CSP, CSRF tokens), add Redis for refresh token/session storage, and add full test coverage.
- 
-## API (selected endpoints)
+4) Open the app in your browser. Vite prints the dev URL in the terminal (commonly `http://localhost:5173` or another port if 5173 is in use).
 
-Authentication
-- `POST /api/auth/register` - body: `{ username, email, password }` -> returns `accessToken` and `refreshToken`
-- `POST /api/auth/login` - body: `{ email, password }` -> returns `accessToken` and `refreshToken`
-- `POST /api/auth/refresh-token` - body: `{ refreshToken }` -> returns new `accessToken` and rotated `refreshToken`
-- `POST /api/auth/logout` - body: `{ refreshToken }` -> revokes the refresh token
+## Environment variables (`server/.env`)
 
-Posts
-- `POST /api/posts` - protected; multipart/form-data `content`, `files` -> creates a post. Files are saved to `/server/uploads` and served at `/uploads/<filename>`.
-- `GET /api/posts` - public; query params `page`, `limit` -> returns feed posts
-- `GET /api/posts/:id` - get single post
-- `POST /api/posts/:id/like` - protected; toggles like for current user
+Create `server/.env` with these recommended values for development:
 
-WebSockets
-- Server runs Socket.io and emits `new_post` when a post is created and `post_liked` when a post is liked. Connect the client to the server base URL (e.g. `http://localhost:5000`) using Socket.io client.
+```dotenv
+PORT=5000
+MONGO_URI=your-mongodb-uri   # optional for local development (tests use in-memory DB)
+ACCESS_TOKEN_SECRET=change_this
+REFRESH_TOKEN_SECRET=change_this
+CLIENT_URL=http://localhost:5173
+# Optional integrations
+REDIS_URL=
+CLOUDINARY_URL=
+SENTRY_DSN=
+NODE_ENV=development
 
-Messaging Socket API
-- Client should connect with the `accessToken` set in `auth` payload: `io(url, { auth: { token: '<accessToken>' } })`.
-- Events:
-	- `send_message` (client -> server): payload `{ to, content, type }`. Server will ack with `{ ok: true, message }` or `{ error }`.
-	- `receive_message` (server -> client): emitted to recipient with full message object when a new message arrives.
-	- `typing` and `stop_typing` (client -> server and server -> client): notify counterpart when typing starts/stops.
+# Optional behavior
+# AUTO_VERIFY_SOCIAL — when set to `true` new social (OAuth) signups are automatically marked verified. This can also be controlled at runtime by an admin via the Admin UI (`/api/admin/settings` and `/api/admin/settings/auto-verify`).
+```
 
-Messaging REST API
-- `GET /api/messages/:userId` - protected; returns messages between authenticated user and `userId`.
-- `PUT /api/messages/:messageId/read` - protected; mark message as read (recipient only).
+### OAuth / Social login env vars
 
-Notifications
-- Notifications are created for message events and are available via the notifications endpoints documented above.
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` — Google OAuth app credentials
+- `GOOGLE_CALLBACK_URL` — optional callback URL (defaults to `SERVER_URL + /api/auth/google/callback`)
+- `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` — GitHub OAuth app credentials
+- `GITHUB_CALLBACK_URL` — optional callback URL (defaults to `SERVER_URL + /api/auth/github/callback`)
+- `SERVER_URL` — public server base URL used for constructing callbacks
 
-Static uploads
-- Uploaded files are accessible at `http://<server>/uploads/<filename>` after upload.
+### Scheduler
 
-Quick example: create a post with `curl` (requires a valid `Authorization: Bearer <accessToken>` header):
+- `DISABLE_SCHEDULER` — set to `1` to disable server-side scheduled post publishing (defaults to enabled)
+
+Notes
+- After enabling OAuth env vars the server exposes `/api/auth/google` and `/api/auth/github` to start the social login flow. The callback redirects back to `CLIENT_URL` with `accessToken` and `refreshToken` in the query string.
+- Scheduled posts: set `scheduledAt` when creating a post to schedule it for future publishing. The server runs a simple scheduler to publish due posts (can be disabled with `DISABLE_SCHEDULER`).
+
+## CSRF protection
+
+The server exposes a lightweight endpoint that SPAs can call to obtain a double-submit CSRF token cookie.
+
+- `GET /api/csrf-token` — sets a `XSRF-TOKEN` cookie (not httpOnly) and returns `{ ok: true }`.
+
+Client usage: read the `XSRF-TOKEN` cookie and include it in the `x-csrf-token` header for any mutating request (POST/PUT/PATCH/DELETE). CSRF protection is disabled when `NODE_ENV=test` to simplify automated tests.
+
+## Email (password reset / verification)
+
+The server ships with a stubbed email sender for development. By default emails are logged instead of being sent. To enable real email delivery provide SMTP credentials in `server/.env` or use a provider like SendGrid.
+
+Recommended env variables (add to `server/.env`):
+
+```dotenv
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=your-smtp-user
+SMTP_PASS=your-smtp-password
+SMTP_SECURE=false # true for port 465
+EMAIL_FROM="My App <no-reply@example.com>"
+```
+
+Notes:
+- If `SMTP_HOST` and `SMTP_USER` are not provided the app will log (stub) emails instead of sending them.
+- Password reset and email verification flows are implemented in `POST /api/auth/forgot-password`, `POST /api/auth/reset/:token`, `POST /api/auth/verify-email` and `POST /api/auth/resend-verification`.
+
+- `ACCESS_TOKEN_SECRET` and `REFRESH_TOKEN_SECRET` must be set for auth to work reliably.
+- `CLIENT_URL` is used for CORS and socket origins.
+
+## Important endpoints (selected)
+
+- `POST /api/auth/register` — register (returns access + refresh tokens)
+- `POST /api/auth/login` — login (returns access + refresh tokens)
+- `GET /api/posts` — public feed
+- `POST /api/posts` — create post (protected, multipart/form-data)
+- `GET /api/notifications` — list notifications (supports pagination)
+- `GET /api/notifications/unread-count` — unread count
+
+WebSockets (Socket.IO): connect with auth token via `io(url, { auth: { token } })`. Server emits `receive_message`, `new_notification`, and other events described in code.
+
+## Running tests (optional)
+
+The server contains Jest tests that use an in-memory MongoDB. To run:
 
 ```powershell
-curl -X POST "http://localhost:5000/api/posts" `
-	-H "Authorization: Bearer <accessToken>" `
-	-F "content=Hello world" `
-	-F "files=@C:\path\to\image.jpg"
+cd d:/socials/social-media-app/server
+npm test -- --runInBand --detectOpenHandles
 ```
 
-Tips
-- For development use a local MongoDB or MongoDB Atlas. Set `MONGO_URI` in `server/.env`.
-- Ensure `ACCESS_TOKEN_SECRET` and `REFRESH_TOKEN_SECRET` are long & random in production.
+Tests are optional for dev flow — you can skip them if you want to iterate on UI features quickly.
 
-## Docker / Compose (local dev)
+## Troubleshooting
 
-You can run the whole stack locally with Docker. The compose file starts MongoDB, the server and the client.
+- If the client Vite server picks a different port, open the URL printed by Vite in the client terminal.
+- If uploads fail, check `server/uploads` exists and is writable, or configure `CLOUDINARY_URL`.
 
-Copy `.env.example` to `server/.env` and set any secrets you want to persist (or rely on the values in `docker-compose.yml` for quick local testing).
+## Next steps (suggested)
 
-Start the stack:
+- Manual smoke check (register/login → post → comment → message → notification flows).
+- Add client E2E tests (Cypress) for critical UI paths.
+- Configure Docker / CI for reproducible deployments.
+
+If you want, I will continue finishing remaining UI polish and then run a final manual smoke verification when you're ready.
+Run client in development (Vite):
+
+## Production quick run
+
+Recommended minimal environment for production deployment (example):
+
+```dotenv
+NODE_ENV=production
+PORT=5000
+MONGO_URI=mongodb://mongo:27017/social_media_app
+ACCESS_TOKEN_SECRET=<long-random-secret>
+REFRESH_TOKEN_SECRET=<long-random-secret>
+CLIENT_URL=https://your-app.example.com
+REDIS_URL=redis://redis:6379
+CLOUDINARY_URL=...
+```
+
+Start the server (recommended under a process manager such as PM2):
 
 ```powershell
-cd d:\socials\social-media-app
-docker-compose up --build
+cd d:/socials/social-media-app/server
+npm install --production
+node ./bin/www.js # or use PM2/ecosystem.config.js
 ```
 
-## Production checklist (quick)
+Notes:
+- Ensure `CLIENT_URL` uses HTTPS and set `NODE_ENV=production` to enable stricter CSP/HSTS behavior in `server/app.js`.
+- Enabling `REDIS_URL` provides caching and refresh-token rotation support. Install `ioredis` in production if using Redis.
 
-- Use HTTPS/TLS (terminate at a reverse proxy or load balancer).
-- Store secrets securely (Vault, cloud provider secrets manager, or env files protected by CI/CD).
-- Use MongoDB Atlas or another managed DB and restrict network access.
-- Use Redis for refresh token storage and session/lock management for refresh token rotation.
-- Configure monitoring (Winston logs shipped to a log aggregator, Sentry for errors, Prometheus for metrics).
-- Harden security: CSP, input validation, XSS sanitization (already added), rate limiting (already added), CSRF protection for cookie flows.
-- Add E2E and security tests, and enable CI gates for tests and linting.
-This exposes:
-- `http://localhost:3000` — React frontend
-- `http://localhost:5000` — Express API
-- MongoDB runs at `mongodb://localhost:27017` (named volume used for persistence)
-
-Uploaded files are mounted from `./server/uploads` so they persist between container restarts.
-
-To stop and remove containers:
-
-```powershell
-docker-compose down
-```
 

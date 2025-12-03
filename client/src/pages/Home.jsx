@@ -12,22 +12,35 @@ export default function Home() {
       setNewPost(post);
     });
     const unsubLike = subscribe('post_liked', (data) => {
-      // could notify feed to update, but feed will poll/refetch for simplicity
       console.log('post liked', data);
     });
 
     return () => {
       unsubNew();
       unsubLike();
-      if (socket && socket.disconnect) socket.disconnect();
     };
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Home</h1>
-      <PostCreate />
-      <Feed newPost={newPost} />
+    <div>
+      <div className="container">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 18,
+          }}
+        >
+          <h1 style={{ margin: 0 }}>Home</h1>
+        </div>
+        <div className="card post-create">
+          <PostCreate />
+        </div>
+        <div className="posts" style={{ marginTop: 16 }}>
+          <Feed newPost={newPost} />
+        </div>
+      </div>
     </div>
   );
 }

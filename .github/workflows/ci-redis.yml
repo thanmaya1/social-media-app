@@ -1,0 +1,52 @@
+name: CI (Mongo + Redis)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-with-redis:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'" 
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install server deps
+        run: |
+          cd server
+          npm ci
+
+      - name: Run lint
+        run: |
+          cd server
+          npm run lint
+
+      - name: Run tests (with Redis enabled)
+        env:
+          ACCESS_TOKEN_SECRET: test_access_secret
+          REFRESH_TOKEN_SECRET: test_refresh_secret
+          MONGO_URI: mongodb://localhost:27017/social_test
+          REDIS_URL: redis://localhost:6379
+        run: |
+          cd server
+          npm test -- --runInBand

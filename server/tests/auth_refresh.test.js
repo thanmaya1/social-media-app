@@ -18,19 +18,25 @@ afterAll(async () => {
 
 describe('Auth refresh and logout', () => {
   test('refresh token rotates and old token reuse is detected', async () => {
-    const reg = await request(app).post('/api/auth/register').send({ username: 'reuser', email: 'reuser@example.com', password: 'Password123!' });
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'reuser', email: 'reuser@example.com', password: 'Password123!' });
     expect(reg.status).toBe(200);
     const oldRefresh = reg.body.refreshToken;
 
     // first refresh
-    const first = await request(app).post('/api/auth/refresh-token').send({ refreshToken: oldRefresh });
+    const first = await request(app)
+      .post('/api/auth/refresh-token')
+      .send({ refreshToken: oldRefresh });
     expect(first.status).toBe(200);
     expect(first.body).toHaveProperty('accessToken');
     expect(first.body).toHaveProperty('refreshToken');
     const newRefresh = first.body.refreshToken;
 
     // using the old refresh token should be detected as reuse
-    const reuse = await request(app).post('/api/auth/refresh-token').send({ refreshToken: oldRefresh });
+    const reuse = await request(app)
+      .post('/api/auth/refresh-token')
+      .send({ refreshToken: oldRefresh });
     expect(reuse.status).toBe(401);
     expect(reuse.body.error).toBeDefined();
 
@@ -43,13 +49,17 @@ describe('Auth refresh and logout', () => {
 
     // newRefresh should still be valid if present in DB (depends on detection)
     // Try refreshing with newRefresh - might be rejected because detection cleared tokens
-    const tryNew = await request(app).post('/api/auth/refresh-token').send({ refreshToken: newRefresh });
+    const tryNew = await request(app)
+      .post('/api/auth/refresh-token')
+      .send({ refreshToken: newRefresh });
     // Accept either 200 or 401 depending on whether clearing happened; just assert a valid response
     expect([200, 401]).toContain(tryNew.status);
   });
 
   test('logout removes refresh token', async () => {
-    const reg = await request(app).post('/api/auth/register').send({ username: 'luser', email: 'luser@example.com', password: 'Password123!' });
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'luser', email: 'luser@example.com', password: 'Password123!' });
     expect(reg.status).toBe(200);
     const refresh = reg.body.refreshToken;
 

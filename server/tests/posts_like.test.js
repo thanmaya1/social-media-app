@@ -17,7 +17,9 @@ afterAll(async () => {
 
 describe('Post like/unlike', () => {
   test('toggle like on a post', async () => {
-    const reg = await request(app).post('/api/auth/register').send({ username: 'liker', email: 'liker@example.com', password: 'Password123!' });
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'liker', email: 'liker@example.com', password: 'Password123!' });
     expect(reg.status).toBe(200);
     const token = reg.body.accessToken;
 
@@ -29,13 +31,17 @@ describe('Post like/unlike', () => {
     const postId = create.body.post._id;
 
     // like
-    const likeRes = await request(app).post(`/api/posts/${postId}/like`).set('Authorization', `Bearer ${token}`);
+    const likeRes = await request(app)
+      .post(`/api/posts/${postId}/like`)
+      .set('Authorization', `Bearer ${token}`);
     expect(likeRes.status).toBe(200);
     expect(Array.isArray(likeRes.body.post.likes)).toBe(true);
     expect(likeRes.body.post.likes.length).toBe(1);
 
     // unlike (toggle)
-    const unlikeRes = await request(app).post(`/api/posts/${postId}/like`).set('Authorization', `Bearer ${token}`);
+    const unlikeRes = await request(app)
+      .post(`/api/posts/${postId}/like`)
+      .set('Authorization', `Bearer ${token}`);
     expect(unlikeRes.status).toBe(200);
     expect(Array.isArray(unlikeRes.body.post.likes)).toBe(true);
     expect(unlikeRes.body.post.likes.length).toBe(0);

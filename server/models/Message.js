@@ -1,15 +1,27 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const MessageSchema = new Schema({
-  sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  content: { type: String },
-  images: [{ type: String }],
-  readAt: { type: Date },
-  type: { type: String, enum: ['text', 'image', 'video'], default: 'text' },
-  isDeleted: { type: Boolean, default: false }
-}, { timestamps: true });
+const MessageSchema = new Schema(
+  {
+    sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    content: { type: String },
+    images: [{ type: String }],
+    imageThumbs: [
+      {
+        small: { type: String },
+        medium: { type: String },
+        large: { type: String },
+      },
+    ],
+    readAt: { type: Date },
+    type: { type: String, enum: ['text', 'image', 'video'], default: 'text' },
+      isDeleted: { type: Boolean, default: false },
+      // which userIds have deleted this message for themselves (soft per-user deletion)
+      deletedFor: { type: [Schema.Types.ObjectId], ref: 'User', default: [] },
+  },
+  { timestamps: true }
+);
 
 MessageSchema.index({ createdAt: 1 });
 

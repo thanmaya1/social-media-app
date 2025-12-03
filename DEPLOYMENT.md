@@ -61,3 +61,22 @@ CLOUDINARY_API_SECRET=
 7) HTTPS / Reverse proxy
 
 - Put Nginx/Traefik in front of the Node and React apps to terminate TLS and proxy requests.
+
+8) Production security & performance checklist
+
+- Ensure `NODE_ENV=production` to enable HSTS and stricter CSP in `server/app.js`.
+- Terminate TLS at the reverse proxy and set `CLIENT_URL` to your HTTPS origin.
+- Set `ACCESS_TOKEN_SECRET` and `REFRESH_TOKEN_SECRET` to long, random values and rotate periodically.
+- Enable Redis by setting `REDIS_URL` for caching and session/refresh token rotation. Install `ioredis` in production.
+- Configure Cloudinary or a durable object store for large file uploads; ensure `CLOUDINARY_*` env vars are present if used.
+- Enable process monitoring (PM2) and set up log forwarding to your log aggregator.
+- Use `compression` (already included) and consider enabling a CDN for static assets and uploaded files.
+
+9) CSP & nonce usage
+
+- The server generates a per-request CSP nonce and injects it into the served `index.html` as a `<meta name="csp-nonce">` tag. If your client needs to run inline scripts, read this meta tag and use the nonce when creating inline script blocks.
+- Avoid `unsafe-eval` and `unsafe-inline` in production: update `server/app.js` CSP directives if you remove inline scripts.
+
+10) Notes on scheduled jobs
+
+- The app ships with a lightweight scheduler. In high-scale setups prefer an external job queue (BullMQ/Redis + worker processes) and set `DISABLE_SCHEDULER=1` for the in-process scheduler.

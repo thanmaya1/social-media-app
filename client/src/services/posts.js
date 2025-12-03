@@ -4,7 +4,10 @@ export async function createPost(formData) {
   // allow an optional onUploadProgress callback by passing it as formData._onUploadProgress
   const onUploadProgress = formData._onUploadProgress;
   if (onUploadProgress) delete formData._onUploadProgress;
-  const res = await api.post('/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' }, onUploadProgress });
+  const res = await api.post('/posts', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress,
+  });
   return res.data;
 }
 
@@ -15,5 +18,25 @@ export async function getFeed(params) {
 
 export async function likePost(postId) {
   const res = await api.post(`/posts/${postId}/like`);
+  return res.data;
+}
+
+export async function updatePost(postId, body) {
+  const res = await api.put(`/posts/${postId}`, body);
+  return res.data;
+}
+
+export async function deletePost(postId) {
+  const res = await api.delete(`/posts/${postId}`);
+  return res.data;
+}
+
+export async function getPost(postId) {
+  const res = await api.get(`/posts/${postId}`);
+  return res.data;
+}
+
+export async function sharePost(postId, comment) {
+  const res = await api.post(`/posts/${postId}/share`, { comment });
   return res.data;
 }

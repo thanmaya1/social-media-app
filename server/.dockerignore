@@ -1,0 +1,11 @@
+node_modules
+.git
+.vscode
+uploads
+coverage
+logs
+npm-debug.log
+yarn-error.log
+.DS_Store
+\.env
+\.env.*
